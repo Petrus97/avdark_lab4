@@ -24,7 +24,8 @@ LIBS=-lrt
 
 all: $(MOV_INSTRUCTIONS:%=lcase_%) \
 	matvec \
-	$(MATMUL_MODES:%=matmul_%)
+	$(MATMUL_MODES:%=matmul_%) \
+	example
 
 test_lcase: $(MOV_INSTRUCTIONS:%=test_lcase_%)
 
@@ -59,6 +60,12 @@ matvec: matvec.o util.o
 matvec.o: matvec.c
 	$(CC) -c -o $@ $(CFLAGS) $< $(LIBS)
 
+example: example.o util.o
+	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+
+example.o: example.c
+	$(CC) -c -o $@ $(CFLAGS) $< $(LIBS)
+
 matmul_%: matmul_%.o util.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
@@ -74,9 +81,11 @@ lcase.c: util.h
 
 matvec.c: util.h
 
+example.c: util.h
+
 matmul.c: util.h
 
 clean:
-	$(RM) *.o lcase_* matmul_* matvec
+	$(RM) *.o lcase_* matmul_* matvec example
 
 .PHONY: clean all test

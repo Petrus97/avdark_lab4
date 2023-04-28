@@ -1,1 +1,6 @@
 .vscode
+lcase_*
+matmul_*
+*.o
+matvec
+example

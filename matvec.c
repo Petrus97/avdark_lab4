@@ -56,6 +56,9 @@ matvec_sse()
          * HINT: You can create the sum of all elements in a vector
          * using two hadd instructions.
          */
+        /* Idea:
+                mat_a ° vec_b = 
+        */
 }
 
 /**

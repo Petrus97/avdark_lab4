@@ -159,6 +159,17 @@ lcase_sse_simple(char *restrict dst, const char *restrict src, size_t len)
          *  - _mm_set1_epi8
          *  - _mm_or_si128 (the por instruction)
          */
+        __m128i to_lower = _mm_set1_epi8(0x20);
+        for (int i = 0; i < len; i+=16)
+        {
+                __m128i tmp = _mm_loadu_si128((__m128i*)(src + i)); // load 16 bytes
+
+                __m128i low_case = _mm_or_si128(tmp, to_lower); // do the or operation
+
+                _mm_storeu_si128((__m128i*)(dst + i), low_case); // store in the destination
+        }
+        
+        
 }
 
 static void
@@ -176,6 +187,17 @@ lcase_sse_cond(char *restrict dst, const char *restrict src, size_t len)
          *  - _mm_cmpgt_epi8 (the pcmpgtb instruction)
          *  - _mm_and_si128 (the pand instruction)
          */
+        __m128i to_lower = _mm_set1_epi8(0x20);
+        __m128i a_char = _mm_set1_epi8('A' - 1);
+        __m128i z_char = _mm_set1_epi8('Z' + 1);
+        for (size_t i = 0; i < len; i+=16)
+        {
+                __m128i tmp = _mm_loadu_si128((__m128i*)(src + i));
+                __m128i and_res = _mm_and_si128(_mm_cmpgt_epi8(tmp, a_char), _mm_cmpgt_epi8(z_char, tmp));
+                __m128i low_case = _mm_or_si128(tmp, _mm_and_si128(and_res, to_lower));
+                _mm_storeu_si128((__m128i*)(dst + i), low_case);
+        }
+        
 }
 
 static char *
@@ -255,7 +277,10 @@ main(int argc, char *argv[])
         int rc = run_tests(in, len,
                            lcase_ref_simple, ref,
                            lcase_sse_simple, out);
-        if (rc) return 1;
+        if (rc)
+        {
+                goto cleanup;
+        }
 
         printf("---\n"
                "With conditional\n"
@@ -263,13 +288,18 @@ main(int argc, char *argv[])
         rc = run_tests(in, len,
                        lcase_ref_cond, ref,
                        lcase_sse_cond, out);
-        if (rc) return 1;
 
+        if (rc)
+        {
+                goto cleanup;
+        }
+
+cleanup:
         my_free(in);
         my_free(out);
         my_free(ref);
 
-        return 0;
+        return rc;
 }
 
 
