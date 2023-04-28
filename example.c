@@ -72,6 +72,21 @@ void test_vector_sum(void) {
   print_vector_ps(result);
 }
 
+void test_vector_multiplication(void) {
+  float a[4];
+  float b[4];
+  float c[4];
+  float d[4];
+  for (size_t i = 0; i < 4; i++) {
+    a[i] = b[i] = c[i] = d[i] = i + 0.5;
+  }
+  __m128 v0 = _mm_load_ps((float *)a);
+  __m128 v1 = _mm_load_ps((float *)b);
+  __m128 res = _mm_mul_ps(v0, v1);
+  print_vector_ps(v0);
+  print_vector_ps(res);
+}
+
 void check_suggested_functions(void) {
   float a[4] = {1.0, 2.0, 3.0, 4.0};
   __m128 v = _mm_load_ps((float *)a);
@@ -150,8 +165,8 @@ void check_suggested_functions(void) {
   printf("_mm_set1_epi8\n");
   print_vector_epi8(ret);
   printf("_mm_or_si128\n");
-  char A[] = {0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1};
-  char B[] = {1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0};
+  char A[] = {0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1};
+  char B[] = {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0};
   __m128i aa = _mm_loadu_si128((__m128i *)A);
   __m128i bb = _mm_loadu_si128((__m128i *)B);
   __m128i or = _mm_or_si128(aa, bb);
@@ -164,6 +179,7 @@ int main(void) {
   test_bad_memcpy();
   test_good_memcpy();
   // test_vector_sum();
-  check_suggested_functions();
+  // check_suggested_functions();
+  test_vector_multiplication();
   return 0;
 }

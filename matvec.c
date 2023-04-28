@@ -56,9 +56,36 @@ matvec_sse()
          * HINT: You can create the sum of all elements in a vector
          * using two hadd instructions.
          */
-        /* Idea:
-                mat_a ° vec_b = 
-        */
+        for (int i = 0; i < SIZE; i++)
+        {
+                for (int j = 0; j < SIZE; j+=4)
+                {
+                        // // unrolled version
+                        // vec_c[i] += (mat_a[MINDEX(i, j + 0)] * vec_b[j + 0])
+                        //         + (mat_a[MINDEX(i, j + 1)] * vec_b[j + 1])
+                        //         + (mat_a[MINDEX(i, j + 2)] * vec_b[j + 2])
+                        //         + (mat_a[MINDEX(i, j + 3)] * vec_b[j + 3]);
+                        /**
+                         * Load the 4 float elements and multiply them element per element
+                         * i.e A_row = {5,2,1,4} b = {3, 1, 0, 2}
+                         * result = {15, 2, 0, 8}
+                         */
+                        __m128 mult_vec = _mm_mul_ps(_mm_load_ps(&mat_a[MINDEX(i,j)]), _mm_load_ps(&vec_b[j]));
+                        /**
+                         * Do an horizontal sum, so we have
+                         * {17, 8, 17, 8}
+                         */
+                        __m128 first_add = _mm_hadd_ps(mult_vec, mult_vec);
+                        /**
+                         * Do another horizontal sum on the result of before (to add four numbers)
+                         * {23, 23, 23, 23}
+                         * and take the first one to store in vec_c
+                         */
+                        vec_c[i] += _mm_cvtss_f32(_mm_hadd_ps(first_add, first_add));
+                }
+                
+        }
+        
 }
 
 /**
@@ -163,21 +190,69 @@ run_multiply()
         }
 }
 
+void small_test()
+{
+        float A[4][4] __attribute__((aligned (XMM_ALIGNMENT_BYTES))) = {
+                {4,3,3,3},
+                {3,5,5,2},
+                {0,4,9,2},
+                {0,1,9,0}
+        };
+        float b[4] __attribute__((aligned (XMM_ALIGNMENT_BYTES))) = {4,8,5,0};
+
+        float x[4] __attribute__((aligned (XMM_ALIGNMENT_BYTES)));
+
+        // simple version
+        for (int i = 0; i < 4; i++)
+                for (int j = 0; j < 4; j++)
+                        x[i] += A[i][j] * b[j];
+
+        for (size_t i = 0; i < 4; i++)
+        {
+                printf("%f ", x[i]);
+        }
+        printf("\n");
+        memset(x, 0, 4 * sizeof(float));
+        
+        // vectorized
+        for (int i = 0; i < 4; i++)
+        {
+                for (int j = 0; j < 4; j+=4)
+                {
+                        __m128 mult_vec = _mm_mul_ps(_mm_load_ps(&A[i][j]), _mm_load_ps(&b[j]));
+                        __m128 first_add = _mm_hadd_ps(mult_vec, mult_vec);
+                        x[i] += _mm_cvtss_f32(_mm_hadd_ps(first_add, first_add));
+                }
+        }
+        for (size_t i = 0; i < 4; i++)
+        {
+                printf("%f ", x[i]);
+        }
+        printf("\n");
+
+
+}
+
 int
 main(int argc, char *argv[])
 {
+        // small_test();
         /* Initialize the matrices with some "random" data. */
         init();
 
         int rc = run_multiply();
-        if (rc) return 1;
+        if (rc)
+        {
+                goto cleanup;
+        }
 
+cleanup:
         _mm_free(mat_a);
         _mm_free(vec_b);
         _mm_free(vec_c);
         _mm_free(vec_ref);
 
-        return 0;
+        return rc;
 }
 
 
