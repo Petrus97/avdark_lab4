@@ -289,6 +289,16 @@ matmul_sse()
         /* TASK: Implement your simple matrix multiplication using SSE
          * here. (Multiply mat_a and mat_b into mat_c.)
          */
+        for (i = 0; i < SIZE; i++) {
+                for (k = 0; k < SIZE; k+=4) {
+                        for (j = 0; j < SIZE; j++) {
+                                mat_c[i][j] += mat_a[i][k + 0] * mat_b[k + 0][j]
+                                                + mat_a[i][k + 1] * mat_b[k + 1][j]
+                                                + mat_a[i][k + 2] * mat_b[k + 2][j]
+                                                + mat_a[i][k + 3] * mat_b[k + 3][j];
+                        }
+                }
+        }
 }
 
 #else
@@ -313,6 +323,64 @@ matmul_ref()
                         }
                 }
         }
+}
+
+void print_simple(float matrix[4][4])
+{
+        for (int i = 0; i < 4; i++)
+        {
+                for (int j = 0; j < 4; j++)
+                {
+                        printf("%.2f ", matrix[i][j]);
+                }
+                printf("\n");
+        }
+        
+}
+
+void simple_test(void)
+{
+        float A[4][4];
+        memset(A, 0, 4 * 4 * sizeof(float));
+        float B[4][4] = {
+                {5,2,6,1},
+                {0,6,2,0},
+                {3,8,1,4},
+                {1,8,5,6},
+        };
+        float C[4][4] = {
+                {7,5,8,0},
+                {1,8,2,6},
+                {9,4,3,8},
+                {5,3,7,9},
+        };
+
+        // simple multiplication
+        for (int i = 0; i < 4; i++)
+        {
+                for (int k = 0; k < 4; k++)
+                {
+                        for (int j = 0; j < 4; j++)
+                        {
+                                A[i][j] += B[i][k] * C[k][j];
+                        }
+                }
+        }
+        print_simple(A);
+        memset(A, 0, 4 * 4 * sizeof(float));
+        // unrolled multiplication
+        for (int i = 0; i < 4; i++) {
+                for (int j = 0; j < 4; j++) {
+                        for (int k = 0; k < 4; k+=4) {
+                                A[i][j] += B[i][k + 0] * C[k + 0][j]
+                                                + B[i][k + 1] * C[k + 1][j]
+                                                + B[i][k + 2] * C[k + 2][j]
+                                                + B[i][k + 3] * C[k + 3][j];
+                        }
+                }
+        }
+        printf("unrolled\n");
+        print_simple(A);
 }
 
 /**
@@ -399,6 +467,8 @@ run_multiply()
 int
 main(int argc, char *argv[])
 {
+        // simple_test();
+        // return 0;
         /* Initialize the matrices with some "random" data. */
         init_matrices();
 
