@@ -70,7 +70,7 @@ matmul_%: matmul_%.o util.o
 	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 
 matmul_%.o: matmul.c
-	$(CC) -c -o $@ -DMODE=MODE_$* $(CFLAGS) $<
+	$(CC) -c -o $@ -DMODE=MODE_$* $(CFLAGS) -fopt-info-vec-optimized $<
 
 util.o: util.c
 	$(CC) -c -o $@ $(CFLAGS) $< $(LIBS)
