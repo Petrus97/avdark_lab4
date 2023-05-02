@@ -179,7 +179,7 @@ int main(void) {
   test_bad_memcpy();
   test_good_memcpy();
   // test_vector_sum();
-  // check_suggested_functions();
+  check_suggested_functions();
   test_vector_multiplication();
   return 0;
 }
