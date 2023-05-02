@@ -295,14 +295,13 @@ matmul_sse()
         /* TASK: Implement your simple matrix multiplication using SSE
          * here. (Multiply mat_a and mat_b into mat_c.)
          */
-        __m128 a_row;
-        __m128 b_col;
-        __m128 mult;
+        // __m128 a_row, b_col, mult;
         for (i = 0; i < SIZE; i++) {
                 for (k = 0; k < SIZE; k+=4) {
                         // Load the row
-                        a_row = _mm_load_ps(&mat_a[i][k + 0]);
+                        __m128 a_row = _mm_load_ps(&mat_a[i][k + 0]);
                         for (j = 0; j < SIZE; j+=4) {
+                                // /*unrolled*/
                                 // mat_c[i][j] += mat_a[i][k + 0] * mat_b[k + 0][j]
                                 //                 + mat_a[i][k + 1] * mat_b[k + 1][j]
                                 //                 + mat_a[i][k + 2] * mat_b[k + 2][j]
@@ -312,13 +311,12 @@ matmul_sse()
                                 __m128 row2 = _mm_load_ps(&mat_b[k + 2][j]);
                                 __m128 row3 = _mm_load_ps(&mat_b[k + 3][j]);
                                 _MM_TRANSPOSE4_PS(row0, row1, row2, row3);
-                                // Set the column_mm_load_ps(&mat_a[k][j]); //
+                                // Set the column
                                 // b_col = _mm_set_ps(mat_b[k + 3][j], mat_b[k + 2][j], mat_b[k + 1][j], mat_b[k + 0][j]);
                                 
-                                // mult = _mm_mul_ps(a_row, row0);
+                                // mult = _mm_mul_ps(a_row, b_col);
                                 // mult = _mm_hadd_ps(mult, mult);
                                 // mult = _mm_hadd_ps(mult, mult);
-                                // mult = _mm_dp_ps(a_row, row0, 0xF1);
 
                                 // mat_c[i][j] += _mm_cvtss_f32(mult);
 
@@ -329,17 +327,6 @@ matmul_sse()
                         }
                 }
         }
-        // for(i=0; i<SIZE; i++) {
-        //     for(k=0; k<SIZE; k++) {
-        //         for(j=0; j<SIZE; j+=4) {
-        //             __m128 a = _mm_set1_ps(mat_a[i][k]);
-        //             __m128 b = _mm_load_ps(&mat_b[k][j]);
-        //             __m128 c = _mm_load_ps(&mat_c[i][j]);
-        //             c = _mm_add_ps(_mm_mul_ps(a,b), c);
-        //             _mm_store_ps(&mat_c[i][j], c);
-        //         }
-        //     }
-        //  }
 }
 
 #else
@@ -352,6 +339,8 @@ matmul_sse()
  * Reference implementation of the matrix multiply algorithm. Used to
  * verify the answer from matmul_opt. Do NOT change this function.
  */
+//#pragma GCC optimize ("O0")
+#pragma GCC optimize ("no-tree-vectorize")
 static void
 matmul_ref()
 {
@@ -365,6 +354,8 @@ matmul_ref()
                 }
         }
 }
+#pragma GCC optimize ("tree-vectorize")
+// #pragma GCC optimize ("")
 
 void print_simple(float matrix[4][4])
 {
@@ -378,6 +369,7 @@ void print_simple(float matrix[4][4])
         }
         
 }
+
 
 void simple_test(void)
 {
@@ -438,8 +430,8 @@ void simple_test(void)
 
         memset(A, 0, 4 * 4 * sizeof(float));
         __m128 a_row;
-        __m128 b_col;
-        __m128 mult;
+        // __m128 b_col;
+        // __m128 mult;
         for (int i = 0; i < 4; i++) {
                 for (int j = 0; j < 4; j+=4) {
                         for (int k = 0; k < 4; k+=4) {
