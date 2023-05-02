@@ -88,6 +88,41 @@ matmul_sse_block(int i, int j, int k)
          * parameter can be used to restrict to which elements the
          * result is stored, all other elements are set to zero.
          */
+        //load the rows
+        __m128 a_row0 = _mm_load_ps(&mat_a[i + 0][k]);
+        __m128 a_row1 = _mm_load_ps(&mat_a[i + 1][k]);
+        __m128 a_row2 = _mm_load_ps(&mat_a[i + 2][k]);
+        __m128 a_row3 = _mm_load_ps(&mat_a[i + 3][k]);
+        // load the columns
+        __m128 b_row0 = _mm_load_ps(&mat_b[k + 0][j]);
+        __m128 b_row1 = _mm_load_ps(&mat_b[k + 1][j]);
+        __m128 b_row2 = _mm_load_ps(&mat_b[k + 2][j]);
+        __m128 b_row3 = _mm_load_ps(&mat_b[k + 3][j]);
+        // to column
+        _MM_TRANSPOSE4_PS(b_row0, b_row1, b_row2, b_row3);
+
+        // first block
+        mat_c[i + 0][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row0, 0xF1));
+        mat_c[i + 0][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row1, 0xF1));
+        mat_c[i + 0][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row2, 0xF1));
+        mat_c[i + 0][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row3, 0xF1));
+        // second block
+        mat_c[i + 1][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row0, 0xF1));
+        mat_c[i + 1][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row1, 0xF1));
+        mat_c[i + 1][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row2, 0xF1));
+        mat_c[i + 1][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row3, 0xF1));
+        // third block
+        mat_c[i + 2][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row0, 0xF1));
+        mat_c[i + 2][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row1, 0xF1));
+        mat_c[i + 2][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row2, 0xF1));
+        mat_c[i + 2][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row3, 0xF1));
+        // fourth block
+        mat_c[i + 3][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row0, 0xF1));
+        mat_c[i + 3][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row1, 0xF1));
+        mat_c[i + 3][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row2, 0xF1));
+        mat_c[i + 3][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row3, 0xF1));
+
+
 }
 
 /**
@@ -339,8 +374,7 @@ matmul_sse()
  * Reference implementation of the matrix multiply algorithm. Used to
  * verify the answer from matmul_opt. Do NOT change this function.
  */
-//#pragma GCC optimize ("O0")
-#pragma GCC optimize ("no-tree-vectorize")
+// #pragma GCC optimize ("no-tree-vectorize")
 static void
 matmul_ref()
 {
@@ -354,8 +388,7 @@ matmul_ref()
                 }
         }
 }
-#pragma GCC optimize ("tree-vectorize")
-// #pragma GCC optimize ("")
+// #pragma GCC optimize ("tree-vectorize")
 
 void print_simple(float matrix[4][4])
 {
