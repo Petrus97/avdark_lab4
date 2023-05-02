@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdbool.h>
 
 #include <smmintrin.h>
 
@@ -101,26 +102,52 @@ matmul_sse_block(int i, int j, int k)
         // to column
         _MM_TRANSPOSE4_PS(b_row0, b_row1, b_row2, b_row3);
 
-        // first block
-        mat_c[i + 0][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row0, 0xF1));
-        mat_c[i + 0][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row1, 0xF1));
-        mat_c[i + 0][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row2, 0xF1));
-        mat_c[i + 0][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row3, 0xF1));
-        // second block
-        mat_c[i + 1][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row0, 0xF1));
-        mat_c[i + 1][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row1, 0xF1));
-        mat_c[i + 1][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row2, 0xF1));
-        mat_c[i + 1][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row3, 0xF1));
-        // third block
-        mat_c[i + 2][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row0, 0xF1));
-        mat_c[i + 2][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row1, 0xF1));
-        mat_c[i + 2][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row2, 0xF1));
-        mat_c[i + 2][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row3, 0xF1));
-        // fourth block
-        mat_c[i + 3][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row0, 0xF1));
-        mat_c[i + 3][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row1, 0xF1));
-        mat_c[i + 3][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row2, 0xF1));
-        mat_c[i + 3][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row3, 0xF1));
+        __m128 c_row;
+        c_row = _mm_add_ps(
+                _mm_add_ps(_mm_dp_ps(a_row0, b_row0, 0xF1), _mm_dp_ps(a_row0, b_row1, 0xF2)),
+                _mm_add_ps(_mm_dp_ps(a_row0, b_row2, 0xF4), _mm_dp_ps(a_row0, b_row3, 0xF8))
+        );
+        _mm_store_ps(&mat_c[i][j], _mm_add_ps(_mm_load_ps(&mat_c[i][j]), c_row));
+
+        c_row = _mm_add_ps(
+                _mm_add_ps(_mm_dp_ps(a_row1, b_row0, 0xF1), _mm_dp_ps(a_row1, b_row1, 0xF2)),
+                _mm_add_ps(_mm_dp_ps(a_row1, b_row2, 0xF4), _mm_dp_ps(a_row1, b_row3, 0xF8))
+        );
+        _mm_store_ps(&mat_c[i + 1][j], _mm_add_ps(_mm_load_ps(&mat_c[i + 1][j]), c_row));
+
+        c_row = _mm_add_ps(
+                _mm_add_ps(_mm_dp_ps(a_row2, b_row0, 0xF1), _mm_dp_ps(a_row2, b_row1, 0xF2)),
+                _mm_add_ps(_mm_dp_ps(a_row2, b_row2, 0xF4), _mm_dp_ps(a_row2, b_row3, 0xF8))
+        );
+        _mm_store_ps(&mat_c[i + 2][j], _mm_add_ps(_mm_load_ps(&mat_c[i + 2][j]), c_row));
+
+        c_row = _mm_add_ps(
+                _mm_add_ps(_mm_dp_ps(a_row3, b_row0, 0xF1), _mm_dp_ps(a_row3, b_row1, 0xF2)),
+                _mm_add_ps(_mm_dp_ps(a_row3, b_row2, 0xF4), _mm_dp_ps(a_row3, b_row3, 0xF8))
+        );
+        _mm_store_ps(&mat_c[i + 3][j], _mm_add_ps(_mm_load_ps(&mat_c[i + 3][j]), c_row));
+        
+
+        // // first block
+        // mat_c[i + 0][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row0, 0xF1));
+        // mat_c[i + 0][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row1, 0xF1));
+        // mat_c[i + 0][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row2, 0xF1));
+        // mat_c[i + 0][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row0, b_row3, 0xF1));
+        // // second block
+        // mat_c[i + 1][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row0, 0xF1));
+        // mat_c[i + 1][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row1, 0xF1));
+        // mat_c[i + 1][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row2, 0xF1));
+        // mat_c[i + 1][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row1, b_row3, 0xF1));
+        // // third block
+        // mat_c[i + 2][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row0, 0xF1));
+        // mat_c[i + 2][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row1, 0xF1));
+        // mat_c[i + 2][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row2, 0xF1));
+        // mat_c[i + 2][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row2, b_row3, 0xF1));
+        // // fourth block
+        // mat_c[i + 3][j + 0] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row0, 0xF1));
+        // mat_c[i + 3][j + 1] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row1, 0xF1));
+        // mat_c[i + 3][j + 2] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row2, 0xF1));
+        // mat_c[i + 3][j + 3] += _mm_cvtss_f32(_mm_dp_ps(a_row3, b_row3, 0xF1));
 
 
 }
