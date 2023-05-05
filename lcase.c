@@ -162,11 +162,11 @@ lcase_sse_simple(char *restrict dst, const char *restrict src, size_t len)
         __m128i to_lower = _mm_set1_epi8(0x20);
         for (int i = 0; i < len; i+=16)
         {
-                __m128i tmp = _mm_loadu_si128((__m128i*)(src + i)); // load 16 bytes
+                __m128i tmp = LOAD_SI128((__m128i*)(src + i)); // load 16 bytes
 
                 __m128i low_case = _mm_or_si128(tmp, to_lower); // do the or operation
 
-                _mm_storeu_si128((__m128i*)(dst + i), low_case); // store in the destination
+                STORE_SI128((__m128i*)(dst + i), low_case); // store in the destination
         }
         
         
@@ -192,10 +192,10 @@ lcase_sse_cond(char *restrict dst, const char *restrict src, size_t len)
         __m128i z_char = _mm_set1_epi8('Z' + 1);
         for (size_t i = 0; i < len; i+=16)
         {
-                __m128i tmp = _mm_loadu_si128((__m128i*)(src + i));
+                __m128i tmp = LOAD_SI128((__m128i*)(src + i));
                 __m128i and_res = _mm_and_si128(_mm_cmpgt_epi8(tmp, a_char), _mm_cmpgt_epi8(z_char, tmp));
                 __m128i low_case = _mm_or_si128(tmp, _mm_and_si128(and_res, to_lower));
-                _mm_storeu_si128((__m128i*)(dst + i), low_case);
+                STORE_SI128((__m128i*)(dst + i), low_case);
         }
         
 }
